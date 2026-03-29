@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContaFactura v2 - Escaner de Facturas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --accent: #00e5a0;
+    --accent2: #005c41;
+    --warn: #ff6b35;
+    --text: #e8e8e8;
+    --text2: #888;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .skip-link {
+    position: absolute; top: -100px; left: 0;
+    background: var(--accent); color: #000;
+    padding: 8px 16px; font-weight: 600; z-index: 9999;
+    font-family: var(--mono);
+  }
+  .skip-link:focus { top: 0; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-weight: 600; color: #000;
+    font-size: 14px; flex-shrink: 0;
+  }
+  header h1 { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
+  header p { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+  /* UPLOAD */
+  .upload-section {
+    border: 2px dashed var(--border);
+    background: var(--surface);
+    padding: 32px 20px;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .upload-section.drag-over { border-color: var(--accent); background: #0d1f19; }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; display: block; opacity: 0.5; }
+  .upload-section h2 { font-family: var(--mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .upload-section p { color: var(--text2); font-size: 13px; margin-bottom: 16px; }
+  #file-input { position: absolute; opacity: 0; width: 1px; height: 1px; overflow: hidden; }
+
+  /* BOTONES */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; font-family: var(--mono); font-size: 12px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    border: none; cursor: pointer; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover, .btn-primary:active { background: #00c489; }
+  .btn-primary:disabled { background: #1a3d2f; color: #444; cursor: not-allowed; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover, .btn-secondary:active { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-warn { background: transparent; color: var(--warn); border: 1px solid #3a1a0d; font-size: 11px; padding: 4px 10px; }
+  .btn-warn:hover, .btn-warn:active { background: #1f0d05; border-color: var(--warn); }
+  .btn-retry { background: transparent; color: #ffd700; border: 1px solid #3a3000; font-size: 11px; padding: 4px 10px; }
+  .btn-retry:hover, .btn-retry:active { background: #1a1500; }
+
+  /* COLA */
+  #queue-section { margin-bottom: 20px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .section-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text2); }
+  .counter { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .queue-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+  .queue-item {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 10px 12px; display: flex; align-items: flex-start;
+    gap: 8px; flex-wrap: wrap;
+  }
+  .queue-item-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .filename { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+  .status-badge { font-size: 10px; padding: 2px 7px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; border: 1px solid; flex-shrink: 0; }
+  .status-pending  { color: var(--text2); border-color: var(--border); }
+  .status-processing { color: #ffd700; border-color: #3a3000; background: #1a1500; }
+  .status-done     { color: var(--accent); border-color: var(--accent2); background: #0d1f19; }
+  .status-error    { color: var(--warn); border-color: #3a1a0d; background: #1a0800; }
+
+  .error-detail {
+    width: 100%; font-family: var(--mono); font-size: 11px;
+    color: var(--warn); background: #1a0800; border: 1px solid #3a1a0d;
+    padding: 6px 10px; margin-top: 4px; word-break: break-all;
+  }
+
+  /* ACCIONES */
+  .actions-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+  /* PROGRESO */
+  #progress-section { margin-bottom: 20px; display: none; }
+  #progress-section.visible { display: block; }
+  .progress-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .progress-bar-outer { background: var(--surface); border: 1px solid var(--border); height: 6px; overflow: hidden; }
+  .progress-bar-inner { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
+
+  /* REGION LIVE NVDA */
+  #live-region { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  /* ERROR GLOBAL */
+  #error-msg { background: #1a0800; border: 1px solid var(--warn); color: var(--warn); padding: 10px 14px; font-family: var(--mono); font-size: 12px; margin-bottom: 14px; display: none; word-break: break-all; }
+  #error-msg.visible { display: block; }
+
+  /* TABLA */
+  .table-wrapper { overflow-x: auto; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); min-width: 700px; }
+  thead { background: var(--surface2); }
+  th { padding: 9px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  .td-tipo { font-size: 10px; padding: 2px 6px; border: 1px solid; white-space: nowrap; display: inline-block; }
+  .tipo-venta { color: var(--accent); border-color: var(--accent2); }
+  .tipo-compra { color: #ff9f45; border-color: #3a2000; }
+  .tipo-desconocido { color: var(--text2); border-color: var(--border); }
+  .td-total { font-weight: 600; color: var(--accent); }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+  .empty-state p { font-family: var(--mono); font-size: 12px; margin-top: 8px; }
+
+  /* DEBUG PANEL */
+  #debug-panel { background: var(--surface); border: 1px solid var(--border); padding: 12px; margin-bottom: 16px; display: none; }
+  #debug-panel.visible { display: block; }
+  #debug-panel h3 { font-family: var(--mono); font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  #debug-content { font-family: var(--mono); font-size: 11px; color: #888; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
+
+  @media (max-width: 500px) {
+    .actions-bar { flex-direction: column; }
+    .btn { justify-content: center; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Ir al contenido principal</a>
+<div id="live-region" aria-live="assertive" aria-atomic="true" role="status"></div>
+
+<header role="banner">
+  <div class="logo-mark" aria-hidden="true">CF</div>
+  <div>
+    <h1>ContaFactura</h1>
+    <p>Digitalizacion automatica con IA - v2</p>
+  </div>
+</header>
+
+<main id="main" class="container" role="main">
+
+  <section aria-labelledby="upload-heading">
+    <div class="upload-section" id="drop-zone" role="region" aria-label="Zona de carga de imagenes de facturas">
+      <label for="file-input">
+        <span class="upload-icon" aria-hidden="true">&#128247;</span>
+        <h2 id="upload-heading">Cargar fotos de facturas</h2>
+        <p>Toca aqui para seleccionar fotos. JPG, PNG, WEBP o PDF.</p>
+        <span class="btn btn-primary" aria-hidden="true">Seleccionar archivos</span>
+      </label>
+      <input
+        type="file" id="file-input" multiple
+        accept="image/jpeg,image/png,image/webp,image/*,application/pdf"
+        aria-label="Seleccionar fotos de facturas"
+        tabindex="0"
+        capture="environment"
+      >
+    </div>
+  </section>
+
+  <div id="error-msg" role="alert" aria-live="assertive"></div>
+
+  <section id="queue-section" aria-labelledby="queue-heading" style="display:none;">
+    <div class="section-header">
+      <h2 class="section-title" id="queue-heading">Archivos en cola</h2>
+      <span class="counter" id="queue-counter" aria-live="polite"></span>
+    </div>
+    <ul class="queue-list" id="queue-list" aria-label="Lista de archivos"></ul>
+  </section>
+
+  <div class="actions-bar" role="toolbar" aria-label="Acciones principales">
+    <button class="btn btn-primary" id="btn-process" disabled aria-disabled="true">
+      Procesar facturas
+    </button>
+    <button class="btn btn-secondary" id="btn-export-csv" disabled aria-disabled="true">
+      Exportar CSV
+    </button>
+    <button class="btn btn-secondary" id="btn-clear" disabled aria-disabled="true">
+      Limpiar todo
+    </button>
+  </div>
+
+  <section id="progress-section" aria-labelledby="progress-heading">
+    <div class="progress-label">
+      <span id="progress-heading">Procesando...</span>
+      <span id="progress-text" aria-live="polite">0 / 0</span>
+    </div>
+    <div class="progress-bar-outer" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-labelledby="progress-heading" id="progress-bar-outer">
+      <div class="progress-bar-inner" id="progress-bar"></div>
+    </div>
+  </section>
+
+  <!-- Panel debug - solo visible si hay errores -->
+  <div id="debug-panel" aria-labelledby="debug-heading">
+    <h3 id="debug-heading">Detalle del ultimo error (para diagnostico)</h3>
+    <div id="debug-content" aria-live="polite"></div>
+  </div>
+
+  <section id="results-section" aria-labelledby="results-heading">
+    <div class="section-header">
+      <h2 class="section-title" id="results-heading">Datos extraidos</h2>
+      <span class="counter" id="results-counter" aria-live="polite"></span>
+    </div>
+    <div id="results-container">
+      <div class="empty-state" id="empty-state">
+        <p>Los datos apareceran aqui despues de procesar las imagenes.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ============================================================
+// ESTADO
+// ============================================================
+const state = {
+  files: [],
+  results: [],
+  processing: false
+};
+
+// ============================================================
+// DOM
+// ============================================================
+const fileInput       = document.getElementById('file-input');
+const dropZone        = document.getElementById('drop-zone');
+const queueSection    = document.getElementById('queue-section');
+const queueList       = document.getElementById('queue-list');
+const queueCounter    = document.getElementById('queue-counter');
+const btnProcess      = document.getElementById('btn-process');
+const btnExportCsv    = document.getElementById('btn-export-csv');
+const btnClear        = document.getElementById('btn-clear');
+const progressSection = document.getElementById('progress-section');
+const progressBar     = document.getElementById('progress-bar');
+const progressBarOuter= document.getElementById('progress-bar-outer');
+const progressText    = document.getElementById('progress-text');
+const resultsContainer= document.getElementById('results-container');
+const resultsCounter  = document.getElementById('results-counter');
+const emptyState      = document.getElementById('empty-state');
+const liveRegion      = document.getElementById('live-region');
+const errorMsg        = document.getElementById('error-msg');
+const debugPanel      = document.getElementById('debug-panel');
+const debugContent    = document.getElementById('debug-content');
+
+// ============================================================
+// NVDA: ANUNCIAR
+// ============================================================
+function anunciar(texto) {
+  liveRegion.textContent = '';
+  setTimeout(() => { liveRegion.textContent = texto; }, 60);
+}
+function mostrarError(texto) {
+  errorMsg.textContent = texto;
+  errorMsg.classList.add('visible');
+  anunciar('Error: ' + texto);
+}
+function ocultarError() {
+  errorMsg.classList.remove('visible');
+  errorMsg.textContent = '';
+}
+function mostrarDebug(texto) {
+  debugContent.textContent = texto;
+  debugPanel.classList.add('visible');
+}
+
+// ============================================================
+// CARGA DE ARCHIVOS
+// ============================================================
+fileInput.addEventListener('change', (e) => {
+  agregarArchivos(Array.from(e.target.files));
+  fileInput.value = '';
+});
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const archivos = Array.from(e.dataTransfer.files).filter(f =>
+    f.type.startsWith('image/') || f.type === 'application/pdf'
+  );
+  if (archivos.length) agregarArchivos(archivos);
+  else mostrarError('Solo se aceptan imagenes o PDF.');
+});
+
+function agregarArchivos(nuevos) {
+  ocultarError();
+  const yaExisten = new Set(state.files.map(f => f.name));
+  const entradas = nuevos
+    .filter(f => !yaExisten.has(f.name))
+    .map(f => ({ file: f, name: f.name, status: 'pending', data: null, errorMsg: '' }));
+  state.files.push(...entradas);
+  renderCola();
+  actualizarBotones();
+  if (entradas.length) anunciar(`${entradas.length} archivo${entradas.length > 1 ? 's' : ''} agregado${entradas.length > 1 ? 's' : ''}. Total: ${state.files.length}.`);
+}
+
+// ============================================================
+// RENDER COLA
+// ============================================================
+function renderCola() {
+  queueList.innerHTML = '';
+  if (state.files.length === 0) { queueSection.style.display = 'none'; return; }
+  queueSection.style.display = 'block';
+  queueCounter.textContent = `${state.files.length} archivo${state.files.length !== 1 ? 's' : ''}`;
+
+  state.files.forEach((item, idx) => {
+    const li = document.createElement('li');
+    li.className = 'queue-item';
+    const etiquetas = { pending: 'Pendiente', processing: 'Procesando', done: 'Completado', error: 'Error' };
+    li.setAttribute('aria-label', `${item.name}, estado: ${etiquetas[item.status]}`);
+
+    // Fila principal
+    const row = document.createElement('div');
+    row.className = 'queue-item-row';
+
+    const fname = document.createElement('span');
+    fname.className = 'filename';
+    fname.title = item.name;
+    fname.textContent = item.name;
+    row.appendChild(fname);
+
+    const badge = document.createElement('span');
+    badge.className = `status-badge status-${item.status}`;
+    badge.setAttribute('aria-hidden', 'true');
+    badge.textContent = etiquetas[item.status];
+    row.appendChild(badge);
+
+    // Boton quitar (solo pendiente)
+    if (item.status === 'pending' && !state.processing) {
+      const btnQ = document.createElement('button');
+      btnQ.className = 'btn btn-warn';
+      btnQ.textContent = 'Quitar';
+      btnQ.setAttribute('aria-label', `Quitar ${item.name}`);
+      btnQ.addEventListener('click', () => {
+        state.files.splice(idx, 1);
+        anunciar(`${item.name} eliminado.`);
+        renderCola();
+        actualizarBotones();
+      });
+      row.appendChild(btnQ);
+    }
+
+    // Boton reintentar (solo error)
+    if (item.status === 'error' && !state.processing) {
+      const btnR = document.createElement('button');
+      btnR.className = 'btn btn-retry';
+      btnR.textContent = 'Reintentar';
+      btnR.setAttribute('aria-label', `Reintentar ${item.name}`);
+      btnR.addEventListener('click', () => {
+        item.status = 'pending';
+        item.errorMsg = '';
+        renderCola();
+        actualizarBotones();
+        anunciar(`${item.name} marcado como pendiente. Presiona Procesar para intentar de nuevo.`);
+      });
+      row.appendChild(btnR);
+    }
+
+    li.appendChild(row);
+
+    // Detalle del error
+    if (item.status === 'error' && item.errorMsg) {
+      const ed = document.createElement('div');
+      ed.className = 'error-detail';
+      ed.setAttribute('role', 'alert');
+      ed.textContent = 'Error: ' + item.errorMsg;
+      li.appendChild(ed);
+    }
+
+    queueList.appendChild(li);
+  });
+}
+
+// ============================================================
+// BOTONES
+// ============================================================
+function actualizarBotones() {
+  const hayPendientes = state.files.some(f => f.status === 'pending');
+  const hayResultados = state.results.length > 0;
+  const proc = state.processing;
+  setBtn(btnProcess, hayPendientes && !proc);
+  setBtn(btnExportCsv, hayResultados && !proc);
+  setBtn(btnClear, (state.files.length > 0 || hayResultados) && !proc);
+}
+function setBtn(btn, activo) {
+  btn.disabled = !activo;
+  btn.setAttribute('aria-disabled', String(!activo));
+}
+
+// ============================================================
+// LEER ARCHIVO COMO BASE64 - COMPATIBLE CON ANDROID
+// ============================================================
+function leerBase64(file) {
+  return new Promise((resolve, reject) => {
+    // Metodo 1: FileReader estandar
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const result = reader.result;
+          if (!result || typeof result !== 'string') {
+            reject(new Error('FileReader devolvio resultado vacio'));
+            return;
+          }
+          const partes = result.split(',');
+          if (partes.length < 2) {
+            reject(new Error('Formato base64 inesperado: ' + result.substring(0, 50)));
+            return;
+          }
+          resolve(partes[1]);
+        } catch (e) {
+          reject(new Error('Error procesando resultado de FileReader: ' + e.message));
+        }
+      };
+      reader.onerror = () => reject(new Error('FileReader error: ' + (reader.error ? reader.error.message : 'desconocido')));
+      reader.readAsDataURL(file);
+    } catch (e) {
+      reject(new Error('No se pudo iniciar FileReader: ' + e.message));
+    }
+  });
+}
+
+// ============================================================
+// EXTRAER JSON ROBUSTO - MANEJA MULTIPLES FORMATOS DE RESPUESTA
+// ============================================================
+function extraerJSON(texto) {
+  if (!texto || typeof texto !== 'string') {
+    throw new Error('Respuesta vacia de la API');
+  }
+
+  const original = texto.trim();
+
+  // Intento 1: parsear directo
+  try { return JSON.parse(o
