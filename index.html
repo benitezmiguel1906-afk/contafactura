@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ContaFactura v2 - Escaner de Facturas</title>
+<title>ContaFactura v3 - Escaner de Facturas</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
 
@@ -57,7 +57,6 @@
 
   .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
 
-  /* UPLOAD */
   .upload-section {
     border: 2px dashed var(--border);
     background: var(--surface);
@@ -73,7 +72,6 @@
   .upload-section p { color: var(--text2); font-size: 13px; margin-bottom: 16px; }
   #file-input { position: absolute; opacity: 0; width: 1px; height: 1px; overflow: hidden; }
 
-  /* BOTONES */
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 18px; font-family: var(--mono); font-size: 12px;
@@ -93,7 +91,6 @@
   .btn-retry { background: transparent; color: #ffd700; border: 1px solid #3a3000; font-size: 11px; padding: 4px 10px; }
   .btn-retry:hover, .btn-retry:active { background: #1a1500; }
 
-  /* COLA */
   #queue-section { margin-bottom: 20px; }
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
   .section-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text2); }
@@ -119,24 +116,19 @@
     padding: 6px 10px; margin-top: 4px; word-break: break-all;
   }
 
-  /* ACCIONES */
   .actions-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
 
-  /* PROGRESO */
   #progress-section { margin-bottom: 20px; display: none; }
   #progress-section.visible { display: block; }
   .progress-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .progress-bar-outer { background: var(--surface); border: 1px solid var(--border); height: 6px; overflow: hidden; }
   .progress-bar-inner { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
 
-  /* REGION LIVE NVDA */
   #live-region { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
-  /* ERROR GLOBAL */
   #error-msg { background: #1a0800; border: 1px solid var(--warn); color: var(--warn); padding: 10px 14px; font-family: var(--mono); font-size: 12px; margin-bottom: 14px; display: none; word-break: break-all; }
   #error-msg.visible { display: block; }
 
-  /* TABLA */
   .table-wrapper { overflow-x: auto; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); min-width: 700px; }
   thead { background: var(--surface2); }
@@ -153,7 +145,6 @@
   .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
   .empty-state p { font-family: var(--mono); font-size: 12px; margin-top: 8px; }
 
-  /* DEBUG PANEL */
   #debug-panel { background: var(--surface); border: 1px solid var(--border); padding: 12px; margin-bottom: 16px; display: none; }
   #debug-panel.visible { display: block; }
   #debug-panel h3 { font-family: var(--mono); font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
@@ -174,7 +165,7 @@
   <div class="logo-mark" aria-hidden="true">CF</div>
   <div>
     <h1>ContaFactura</h1>
-    <p>Digitalizacion automatica con IA - v2</p>
+    <p>Digitalizacion automatica con IA - v3</p>
   </div>
 </header>
 
@@ -193,7 +184,6 @@
         accept="image/jpeg,image/png,image/webp,image/*,application/pdf"
         aria-label="Seleccionar fotos de facturas"
         tabindex="0"
-        capture="environment"
       >
     </div>
   </section>
@@ -230,9 +220,8 @@
     </div>
   </section>
 
-  <!-- Panel debug - solo visible si hay errores -->
   <div id="debug-panel" aria-labelledby="debug-heading">
-    <h3 id="debug-heading">Detalle del ultimo error (para diagnostico)</h3>
+    <h3 id="debug-heading">Detalle del ultimo error</h3>
     <div id="debug-content" aria-live="polite"></div>
   </div>
 
@@ -251,18 +240,8 @@
 </main>
 
 <script>
-// ============================================================
-// ESTADO
-// ============================================================
-const state = {
-  files: [],
-  results: [],
-  processing: false
-};
+const state = { files: [], results: [], processing: false };
 
-// ============================================================
-// DOM
-// ============================================================
 const fileInput       = document.getElementById('file-input');
 const dropZone        = document.getElementById('drop-zone');
 const queueSection    = document.getElementById('queue-section');
@@ -283,9 +262,6 @@ const errorMsg        = document.getElementById('error-msg');
 const debugPanel      = document.getElementById('debug-panel');
 const debugContent    = document.getElementById('debug-content');
 
-// ============================================================
-// NVDA: ANUNCIAR
-// ============================================================
 function anunciar(texto) {
   liveRegion.textContent = '';
   setTimeout(() => { liveRegion.textContent = texto; }, 60);
@@ -304,9 +280,6 @@ function mostrarDebug(texto) {
   debugPanel.classList.add('visible');
 }
 
-// ============================================================
-// CARGA DE ARCHIVOS
-// ============================================================
 fileInput.addEventListener('change', (e) => {
   agregarArchivos(Array.from(e.target.files));
   fileInput.value = '';
@@ -333,25 +306,21 @@ function agregarArchivos(nuevos) {
   state.files.push(...entradas);
   renderCola();
   actualizarBotones();
-  if (entradas.length) anunciar(`${entradas.length} archivo${entradas.length > 1 ? 's' : ''} agregado${entradas.length > 1 ? 's' : ''}. Total: ${state.files.length}.`);
+  if (entradas.length) anunciar(entradas.length + ' archivo' + (entradas.length > 1 ? 's' : '') + ' agregado' + (entradas.length > 1 ? 's' : '') + '. Total: ' + state.files.length + '.');
 }
 
-// ============================================================
-// RENDER COLA
-// ============================================================
 function renderCola() {
   queueList.innerHTML = '';
   if (state.files.length === 0) { queueSection.style.display = 'none'; return; }
   queueSection.style.display = 'block';
-  queueCounter.textContent = `${state.files.length} archivo${state.files.length !== 1 ? 's' : ''}`;
+  queueCounter.textContent = state.files.length + ' archivo' + (state.files.length !== 1 ? 's' : '');
 
   state.files.forEach((item, idx) => {
     const li = document.createElement('li');
     li.className = 'queue-item';
     const etiquetas = { pending: 'Pendiente', processing: 'Procesando', done: 'Completado', error: 'Error' };
-    li.setAttribute('aria-label', `${item.name}, estado: ${etiquetas[item.status]}`);
+    li.setAttribute('aria-label', item.name + ', estado: ' + etiquetas[item.status]);
 
-    // Fila principal
     const row = document.createElement('div');
     row.className = 'queue-item-row';
 
@@ -362,45 +331,42 @@ function renderCola() {
     row.appendChild(fname);
 
     const badge = document.createElement('span');
-    badge.className = `status-badge status-${item.status}`;
+    badge.className = 'status-badge status-' + item.status;
     badge.setAttribute('aria-hidden', 'true');
     badge.textContent = etiquetas[item.status];
     row.appendChild(badge);
 
-    // Boton quitar (solo pendiente)
     if (item.status === 'pending' && !state.processing) {
       const btnQ = document.createElement('button');
       btnQ.className = 'btn btn-warn';
       btnQ.textContent = 'Quitar';
-      btnQ.setAttribute('aria-label', `Quitar ${item.name}`);
+      btnQ.setAttribute('aria-label', 'Quitar ' + item.name);
       btnQ.addEventListener('click', () => {
         state.files.splice(idx, 1);
-        anunciar(`${item.name} eliminado.`);
+        anunciar(item.name + ' eliminado.');
         renderCola();
         actualizarBotones();
       });
       row.appendChild(btnQ);
     }
 
-    // Boton reintentar (solo error)
     if (item.status === 'error' && !state.processing) {
       const btnR = document.createElement('button');
       btnR.className = 'btn btn-retry';
       btnR.textContent = 'Reintentar';
-      btnR.setAttribute('aria-label', `Reintentar ${item.name}`);
+      btnR.setAttribute('aria-label', 'Reintentar ' + item.name);
       btnR.addEventListener('click', () => {
         item.status = 'pending';
         item.errorMsg = '';
         renderCola();
         actualizarBotones();
-        anunciar(`${item.name} marcado como pendiente. Presiona Procesar para intentar de nuevo.`);
+        anunciar(item.name + ' marcado como pendiente.');
       });
       row.appendChild(btnR);
     }
 
     li.appendChild(row);
 
-    // Detalle del error
     if (item.status === 'error' && item.errorMsg) {
       const ed = document.createElement('div');
       ed.className = 'error-detail';
@@ -413,9 +379,6 @@ function renderCola() {
   });
 }
 
-// ============================================================
-// BOTONES
-// ============================================================
 function actualizarBotones() {
   const hayPendientes = state.files.some(f => f.status === 'pending');
   const hayResultados = state.results.length > 0;
@@ -429,12 +392,8 @@ function setBtn(btn, activo) {
   btn.setAttribute('aria-disabled', String(!activo));
 }
 
-// ============================================================
-// LEER ARCHIVO COMO BASE64 - COMPATIBLE CON ANDROID
-// ============================================================
 function leerBase64(file) {
   return new Promise((resolve, reject) => {
-    // Metodo 1: FileReader estandar
     try {
       const reader = new FileReader();
       reader.onload = () => {
@@ -446,12 +405,12 @@ function leerBase64(file) {
           }
           const partes = result.split(',');
           if (partes.length < 2) {
-            reject(new Error('Formato base64 inesperado: ' + result.substring(0, 50)));
+            reject(new Error('Formato base64 inesperado'));
             return;
           }
           resolve(partes[1]);
         } catch (e) {
-          reject(new Error('Error procesando resultado de FileReader: ' + e.message));
+          reject(new Error('Error procesando FileReader: ' + e.message));
         }
       };
       reader.onerror = () => reject(new Error('FileReader error: ' + (reader.error ? reader.error.message : 'desconocido')));
@@ -462,15 +421,249 @@ function leerBase64(file) {
   });
 }
 
-// ============================================================
-// EXTRAER JSON ROBUSTO - MANEJA MULTIPLES FORMATOS DE RESPUESTA
-// ============================================================
 function extraerJSON(texto) {
-  if (!texto || typeof texto !== 'string') {
-    throw new Error('Respuesta vacia de la API');
+  if (!texto || typeof texto !== 'string') throw new Error('Respuesta vacia de la API');
+  const original = texto.trim();
+  try { return JSON.parse(original); } catch (_) {}
+  const bloqueJson = original.match(/```json\s*([\s\S]*?)```/i);
+  if (bloqueJson) { try { return JSON.parse(bloqueJson[1].trim()); } catch (_) {} }
+  const bloqueGenerico = original.match(/```\s*([\s\S]*?)```/);
+  if (bloqueGenerico) { try { return JSON.parse(bloqueGenerico[1].trim()); } catch (_) {} }
+  const inicio = original.indexOf('{');
+  const fin = original.lastIndexOf('}');
+  if (inicio !== -1 && fin !== -1 && fin > inicio) {
+    try { return JSON.parse(original.substring(inicio, fin + 1)); } catch (_) {}
+  }
+  const limpio = original.replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ').replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+  try { return JSON.parse(limpio); } catch (_) {}
+  throw new Error('No se pudo extraer JSON. Respuesta: ' + original.substring(0, 300));
+}
+
+async function analizarFactura(item) {
+  const mediaType = (item.file.type && item.file.type !== '') ? item.file.type : 'image/jpeg';
+  const base64 = await leerBase64(item.file);
+  if (!base64 || base64.length < 10) throw new Error('No se pudo leer el archivo.');
+
+  const promptTexto = 'Eres un asistente contable experto. Analiza esta imagen de factura.\n\nINSTRUCCION CRITICA: Tu respuesta debe ser EXCLUSIVAMENTE el objeto JSON indicado abajo.\nNO escribas ninguna explicacion, saludo, ni texto antes o despues del JSON.\nNO uses bloques de codigo ni backticks.\nSOLO el JSON puro.\n\nFormato exacto requerido:\n{"tipo":"venta o compra o desconocido","numero_factura":"valor o null","fecha":"YYYY-MM-DD o texto encontrado o null","proveedor_o_cliente":"nombre o null","ruc_rfc":"identificacion fiscal o null","subtotal":numero_o_null,"iva":numero_o_null,"total":numero_o_null,"moneda":"PYG o MXN o USD o la que corresponda","concepto_principal":"descripcion breve o null","notas":"datos adicionales o null"}\n\nReglas:\n- Para campos numericos usa solo el numero sin puntos ni comas de miles. Si no se puede determinar usa null.\n- tipo venta si la despensa vende al cliente, compra si la despensa compra a un proveedor.\n- Si la moneda parece ser guaranies paraguayos usa PYG.';
+
+  let contenido;
+  if (mediaType === 'application/pdf') {
+    contenido = [
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+      { type: 'text', text: promptTexto }
+    ];
+  } else {
+    const mt = mediaType.startsWith('image/') ? mediaType : 'image/jpeg';
+    contenido = [
+      { type: 'image', source: { type: 'base64', media_type: mt, data: base64 } },
+      { type: 'text', text: promptTexto }
+    ];
   }
 
-  const original = texto.trim();
+  let response;
+  try {
+    response = await fetch('https://corsproxy.io/?url=https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: contenido }]
+      })
+    });
+  } catch (fetchErr) {
+    throw new Error('Error de red: ' + fetchErr.message);
+  }
 
-  // Intento 1: parsear directo
-  try { return JSON.parse(o
+  if (!response.ok) {
+    let detalle = '';
+    try { const errJson = await response.json(); detalle = errJson?.error?.message || JSON.stringify(errJson); } catch (_) { detalle = 'sin detalle'; }
+    throw new Error('API HTTP ' + response.status + ': ' + detalle);
+  }
+
+  let data;
+  try { data = await response.json(); } catch (e) { throw new Error('Respuesta invalida de API: ' + e.message); }
+
+  const textoRespuesta = (data?.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('').trim();
+  if (!textoRespuesta) throw new Error('API devolvio respuesta sin texto. ' + JSON.stringify(data).substring(0, 200));
+
+  mostrarDebug('Respuesta bruta:\n' + textoRespuesta);
+  return extraerJSON(textoRespuesta);
+}
+
+btnProcess.addEventListener('click', async () => {
+  if (state.processing) return;
+  ocultarError();
+  debugPanel.classList.remove('visible');
+
+  const pendientes = state.files.filter(f => f.status === 'pending');
+  if (!pendientes.length) return;
+
+  state.processing = true;
+  actualizarBotones();
+  progressSection.classList.add('visible');
+
+  let procesados = 0;
+  const total = pendientes.length;
+  anunciar('Procesando ' + total + ' factura' + (total > 1 ? 's' : '') + '. Por favor espere.');
+
+  for (const item of pendientes) {
+    item.status = 'processing';
+    item.errorMsg = '';
+    renderCola();
+
+    try {
+      const datos = await analizarFactura(item);
+      item.status = 'done';
+      item.data = datos;
+      state.results.push(Object.assign({ archivo: item.name }, datos));
+      anunciar(item.name + ' procesada.');
+      debugPanel.classList.remove('visible');
+    } catch (err) {
+      item.status = 'error';
+      item.errorMsg = err.message;
+      mostrarDebug('Error en ' + item.name + ':\n' + err.message);
+      anunciar('Error en ' + item.name + ': ' + err.message);
+    }
+
+    procesados++;
+    const pct = Math.round((procesados / total) * 100);
+    progressBar.style.width = pct + '%';
+    progressBarOuter.setAttribute('aria-valuenow', pct);
+    progressText.textContent = procesados + ' / ' + total;
+
+    renderCola();
+    renderResultados();
+    actualizarBotones();
+  }
+
+  state.processing = false;
+  actualizarBotones();
+
+  const exitosos = state.files.filter(f => f.status === 'done').length;
+  const errores  = state.files.filter(f => f.status === 'error').length;
+  let msg = 'Procesamiento completado. ' + exitosos + ' correcta' + (exitosos !== 1 ? 's' : '') + '.';
+  if (errores > 0) msg += ' ' + errores + ' con error.';
+  if (exitosos > 0) msg += ' Puede exportar el CSV.';
+  anunciar(msg);
+});
+
+function renderResultados() {
+  if (state.results.length === 0) {
+    resultsContainer.innerHTML = '';
+    resultsContainer.appendChild(emptyState);
+    resultsCounter.textContent = '';
+    return;
+  }
+
+  resultsCounter.textContent = state.results.length + ' registro' + (state.results.length !== 1 ? 's' : '');
+
+  const cols = [
+    { key: 'archivo',            label: 'Archivo'     },
+    { key: 'tipo',               label: 'Tipo'        },
+    { key: 'numero_factura',     label: 'N. Factura'  },
+    { key: 'fecha',              label: 'Fecha'       },
+    { key: 'proveedor_o_cliente',label: 'Prov/Cliente'},
+    { key: 'ruc_rfc',            label: 'RUC/RFC'     },
+    { key: 'concepto_principal', label: 'Concepto'    },
+    { key: 'subtotal',           label: 'Subtotal'    },
+    { key: 'iva',                label: 'IVA'         },
+    { key: 'total',              label: 'Total'       },
+    { key: 'moneda',             label: 'Moneda'      },
+    { key: 'notas',              label: 'Notas'       },
+  ];
+
+  const tabla = document.createElement('table');
+  tabla.setAttribute('aria-label', 'Datos extraidos de facturas');
+
+  const thead = document.createElement('thead');
+  const trH = document.createElement('tr');
+  cols.forEach((col, i) => {
+    const th = document.createElement('th');
+    th.setAttribute('scope', 'col');
+    th.setAttribute('aria-colindex', i + 1);
+    th.textContent = col.label;
+    trH.appendChild(th);
+  });
+  thead.appendChild(trH);
+  tabla.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  state.results.forEach((row, ri) => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('aria-rowindex', ri + 2);
+    cols.forEach((col, ci) => {
+      const td = document.createElement('td');
+      td.setAttribute('aria-colindex', ci + 1);
+      const val = row[col.key];
+      if (col.key === 'tipo' && val) {
+        const sp = document.createElement('span');
+        sp.className = 'td-tipo tipo-' + (val === 'venta' ? 'venta' : val === 'compra' ? 'compra' : 'desconocido');
+        sp.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+        td.appendChild(sp);
+      } else if (['subtotal','iva','total'].includes(col.key) && val != null && val !== '') {
+        td.className = col.key === 'total' ? 'td-total' : '';
+        const num = parseFloat(val);
+        td.textContent = isNaN(num) ? val : num.toLocaleString('es-PY');
+      } else {
+        td.textContent = (val != null && val !== '') ? val : '-';
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  tabla.appendChild(tbody);
+  resultsContainer.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrapper';
+  wrap.appendChild(tabla);
+  resultsContainer.appendChild(wrap);
+}
+
+btnExportCsv.addEventListener('click', () => {
+  if (!state.results.length) return;
+  const cabeceras = ['Archivo','Tipo','Numero Factura','Fecha','Proveedor Cliente','RUC RFC','Concepto','Subtotal','IVA','Total','Moneda','Notas'];
+  const filas = state.results.map(r => [
+    r.archivo || '', r.tipo || '', r.numero_factura || '', r.fecha || '',
+    r.proveedor_o_cliente || '', r.ruc_rfc || '', r.concepto_principal || '',
+    r.subtotal != null ? r.subtotal : '',
+    r.iva != null ? r.iva : '',
+    r.total != null ? r.total : '',
+    r.moneda || '', r.notas || ''
+  ]);
+  const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const csv = [cabeceras.map(esc).join(','), ...filas.map(f => f.map(esc).join(','))].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'facturas_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  anunciar('CSV exportado. ' + state.results.length + ' registros.');
+});
+
+btnClear.addEventListener('click', () => {
+  state.files = [];
+  state.results = [];
+  state.processing = false;
+  progressSection.classList.remove('visible');
+  progressBar.style.width = '0%';
+  progressText.textContent = '0 / 0';
+  debugPanel.classList.remove('visible');
+  ocultarError();
+  renderCola();
+  renderResultados();
+  actualizarBotones();
+  anunciar('Todo limpiado.');
+});
+
+renderResultados();
+actualizarBotones();
+</script>
+
+</body>
+</html>
