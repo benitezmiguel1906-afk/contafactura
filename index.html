@@ -3,124 +3,96 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ContaFactura v5 - Escaner de Facturas</title>
+<title>ContaFactura v6</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-
-  :root {
-    --bg: #0d0d0d;
-    --surface: #161616;
-    --surface2: #1f1f1f;
-    --border: #2a2a2a;
-    --accent: #00e5a0;
-    --accent2: #005c41;
-    --warn: #ff6b35;
-    --text: #e8e8e8;
-    --text2: #888;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.6; min-height: 100vh; }
-  #live-region { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-
-  #pantalla-apikey { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
-  .apikey-card { background: var(--surface); border: 1px solid var(--border); padding: 32px 24px; width: 100%; max-width: 480px; }
-  .apikey-card .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .logo-mark { width: 36px; height: 36px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 600; color: #000; font-size: 14px; flex-shrink: 0; }
-  .apikey-card h1 { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
-  .apikey-card h2 { font-family: var(--mono); font-size: 13px; color: var(--text); margin-bottom: 8px; font-weight: 600; }
-  .apikey-card p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.7; }
-  .apikey-card a { color: var(--accent); text-decoration: none; }
-  .field-group { margin-bottom: 16px; }
-  .field-group label { display: block; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); margin-bottom: 6px; }
-  .field-group input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
-  .field-group input:focus { border-color: var(--accent); }
-  .field-group input::placeholder { color: #444; }
-  #apikey-error { background: #1a0800; border: 1px solid var(--warn); color: var(--warn); padding: 8px 12px; font-family: var(--mono); font-size: 12px; margin-top: 12px; display: none; }
-  #apikey-error.visible { display: block; }
-
-  #pantalla-app { display: none; }
-  .skip-link { position: absolute; top: -100px; left: 0; background: var(--accent); color: #000; padding: 8px 16px; font-weight: 600; z-index: 9999; font-family: var(--mono); }
-  .skip-link:focus { top: 0; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  header h1 { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
-  header p { font-size: 11px; color: var(--text2); font-family: var(--mono); }
-  .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
-
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; border: none; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; width: 100%; }
-  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .btn-primary { background: var(--accent); color: #000; }
-  .btn-primary:hover, .btn-primary:active { background: #00c489; }
-  .btn-primary:disabled { background: #1a3d2f; color: #444; cursor: not-allowed; }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover, .btn-secondary:active { border-color: var(--accent); color: var(--accent); }
-  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-warn { background: transparent; color: var(--warn); border: 1px solid #3a1a0d; font-size: 11px; padding: 4px 10px; width: auto; }
-  .btn-warn:hover, .btn-warn:active { background: #1f0d05; border-color: var(--warn); }
-  .btn-retry { background: transparent; color: #ffd700; border: 1px solid #3a3000; font-size: 11px; padding: 4px 10px; width: auto; }
-  .btn-retry:hover, .btn-retry:active { background: #1a1500; }
-  .btn-auto { width: auto; }
-
-  .upload-section { border: 2px dashed var(--border); background: var(--surface); padding: 28px 20px; text-align: center; transition: border-color 0.2s, background 0.2s; margin-bottom: 20px; position: relative; }
-  .upload-section.drag-over { border-color: var(--accent); background: #0d1f19; }
-  .upload-icon { font-size: 36px; margin-bottom: 10px; display: block; opacity: 0.5; }
-  .upload-section h2 { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
-  .upload-section p { color: var(--text2); font-size: 13px; margin-bottom: 14px; }
-  #file-input { position: absolute; opacity: 0; width: 1px; height: 1px; overflow: hidden; }
-
-  #queue-section { margin-bottom: 20px; }
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .section-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text2); }
-  .counter { font-family: var(--mono); font-size: 12px; color: var(--accent); }
-  .queue-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-  .queue-item { background: var(--surface); border: 1px solid var(--border); padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
-  .queue-item-row { display: flex; align-items: center; gap: 8px; width: 100%; }
-  .filename { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
-  .status-badge { font-size: 10px; padding: 2px 7px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; border: 1px solid; flex-shrink: 0; }
-  .status-pending    { color: var(--text2); border-color: var(--border); }
-  .status-processing { color: #ffd700; border-color: #3a3000; background: #1a1500; }
-  .status-done       { color: var(--accent); border-color: var(--accent2); background: #0d1f19; }
-  .status-error      { color: var(--warn); border-color: #3a1a0d; background: #1a0800; }
-  .error-detail { width: 100%; font-family: var(--mono); font-size: 11px; color: var(--warn); background: #1a0800; border: 1px solid #3a1a0d; padding: 6px 10px; margin-top: 4px; word-break: break-all; }
-
-  .actions-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  .actions-bar .btn { width: auto; }
-
-  #progress-section { margin-bottom: 20px; display: none; }
-  #progress-section.visible { display: block; }
-  .progress-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-  .progress-bar-outer { background: var(--surface); border: 1px solid var(--border); height: 6px; overflow: hidden; }
-  .progress-bar-inner { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
-
-  #error-msg { background: #1a0800; border: 1px solid var(--warn); color: var(--warn); padding: 10px 14px; font-family: var(--mono); font-size: 12px; margin-bottom: 14px; display: none; word-break: break-all; }
-  #error-msg.visible { display: block; }
-
-  .table-wrapper { overflow-x: auto; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); min-width: 700px; }
-  thead { background: var(--surface2); }
-  th { padding: 9px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  .td-tipo { font-size: 10px; padding: 2px 6px; border: 1px solid; white-space: nowrap; display: inline-block; }
-  .tipo-venta { color: var(--accent); border-color: var(--accent2); }
-  .tipo-compra { color: #ff9f45; border-color: #3a2000; }
-  .tipo-desconocido { color: var(--text2); border-color: var(--border); }
-  .td-total { font-weight: 600; color: var(--accent); }
-  .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
-  .empty-state p { font-family: var(--mono); font-size: 12px; margin-top: 8px; }
-
-  #debug-panel { background: var(--surface); border: 1px solid var(--border); padding: 12px; margin-bottom: 16px; display: none; }
-  #debug-panel.visible { display: block; }
-  #debug-panel h3 { font-family: var(--mono); font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-  #debug-content { font-family: var(--mono); font-size: 11px; color: #888; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
-
-  @media (max-width: 500px) {
-    .actions-bar { flex-direction: column; }
-    .actions-bar .btn { width: 100%; }
-  }
+  :root{--bg:#0d0d0d;--surface:#161616;--surface2:#1f1f1f;--border:#2a2a2a;--accent:#00e5a0;--accent2:#005c41;--warn:#ff6b35;--text:#e8e8e8;--text2:#888;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;min-height:100vh;}
+  #live-region{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+  #pantalla-apikey{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+  .apikey-card{background:var(--surface);border:1px solid var(--border);padding:32px 24px;width:100%;max-width:480px;}
+  .logo-row{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+  .logo-mark{width:36px;height:36px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;color:#000;font-size:14px;flex-shrink:0;}
+  .apikey-card h1{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;}
+  .apikey-card h2{font-family:var(--mono);font-size:13px;color:var(--text);margin-bottom:8px;font-weight:600;}
+  .apikey-card p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;}
+  .apikey-card a{color:var(--accent);text-decoration:none;}
+  .field-group{margin-bottom:16px;}
+  .field-group label{display:block;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:6px;}
+  .field-group input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s;}
+  .field-group input:focus{border-color:var(--accent);}
+  .field-group input::placeholder{color:#444;}
+  #apikey-error{background:#1a0800;border:1px solid var(--warn);color:var(--warn);padding:8px 12px;font-family:var(--mono);font-size:12px;margin-top:12px;display:none;}
+  #apikey-error.visible{display:block;}
+  #pantalla-app{display:none;}
+  .skip-link{position:absolute;top:-100px;left:0;background:var(--accent);color:#000;padding:8px 16px;font-weight:600;z-index:9999;font-family:var(--mono);}
+  .skip-link:focus{top:0;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .header-left{display:flex;align-items:center;gap:12px;}
+  header h1{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;}
+  header p{font-size:11px;color:var(--text2);font-family:var(--mono);}
+  .container{max-width:1100px;margin:0 auto;padding:20px 16px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;font-family:var(--mono);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;width:100%;}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  .btn-primary{background:var(--accent);color:#000;}
+  .btn-primary:hover,.btn-primary:active{background:#00c489;}
+  .btn-primary:disabled{background:#1a3d2f;color:#444;cursor:not-allowed;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .btn-secondary:hover,.btn-secondary:active{border-color:var(--accent);color:var(--accent);}
+  .btn-secondary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-warn{background:transparent;color:var(--warn);border:1px solid #3a1a0d;font-size:11px;padding:4px 10px;width:auto;}
+  .btn-warn:hover,.btn-warn:active{background:#1f0d05;border-color:var(--warn);}
+  .btn-retry{background:transparent;color:#ffd700;border:1px solid #3a3000;font-size:11px;padding:4px 10px;width:auto;}
+  .btn-retry:hover,.btn-retry:active{background:#1a1500;}
+  .btn-auto{width:auto;}
+  .upload-section{border:2px dashed var(--border);background:var(--surface);padding:28px 20px;text-align:center;transition:border-color .2s,background .2s;margin-bottom:20px;position:relative;}
+  .upload-section.drag-over{border-color:var(--accent);background:#0d1f19;}
+  .upload-icon{font-size:36px;margin-bottom:10px;display:block;opacity:.5;}
+  .upload-section h2{font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em;}
+  .upload-section p{color:var(--text2);font-size:13px;margin-bottom:14px;}
+  #file-input{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden;}
+  #queue-section{margin-bottom:20px;}
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .section-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text2);}
+  .counter{font-family:var(--mono);font-size:12px;color:var(--accent);}
+  .queue-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .queue-item{background:var(--surface);border:1px solid var(--border);padding:10px 12px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+  .queue-item-row{display:flex;align-items:center;gap:8px;width:100%;}
+  .filename{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:12px;}
+  .status-badge{font-size:10px;padding:2px 7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;border:1px solid;flex-shrink:0;}
+  .status-pending{color:var(--text2);border-color:var(--border);}
+  .status-processing{color:#ffd700;border-color:#3a3000;background:#1a1500;}
+  .status-done{color:var(--accent);border-color:var(--accent2);background:#0d1f19;}
+  .status-error{color:var(--warn);border-color:#3a1a0d;background:#1a0800;}
+  .error-detail{width:100%;font-family:var(--mono);font-size:11px;color:var(--warn);background:#1a0800;border:1px solid #3a1a0d;padding:6px 10px;margin-top:4px;word-break:break-all;}
+  .actions-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+  .actions-bar .btn{width:auto;}
+  #progress-section{margin-bottom:20px;display:none;}
+  #progress-section.visible{display:block;}
+  .progress-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:4px;}
+  .progress-bar-outer{background:var(--surface);border:1px solid var(--border);height:6px;overflow:hidden;}
+  .progress-bar-inner{height:100%;background:var(--accent);width:0%;transition:width .4s ease;}
+  #error-msg{background:#1a0800;border:1px solid var(--warn);color:var(--warn);padding:10px 14px;font-family:var(--mono);font-size:12px;margin-bottom:14px;display:none;word-break:break-all;}
+  #error-msg.visible{display:block;}
+  .table-wrapper{overflow-x:auto;border:1px solid var(--border);-webkit-overflow-scrolling:touch;}
+  table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono);min-width:700px;}
+  thead{background:var(--surface2);}
+  th{padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;}
+  td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .td-tipo{font-size:10px;padding:2px 6px;border:1px solid;white-space:nowrap;display:inline-block;}
+  .tipo-venta{color:var(--accent);border-color:var(--accent2);}
+  .tipo-compra{color:#ff9f45;border-color:#3a2000;}
+  .tipo-desconocido{color:var(--text2);border-color:var(--border);}
+  .td-total{font-weight:600;color:var(--accent);}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text2);}
+  .empty-state p{font-family:var(--mono);font-size:12px;margin-top:8px;}
+  #debug-panel{background:var(--surface);border:1px solid var(--border);padding:12px;margin-bottom:16px;display:none;}
+  #debug-panel.visible{display:block;}
+  #debug-panel h3{font-family:var(--mono);font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+  #debug-content{font-family:var(--mono);font-size:11px;color:#888;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;}
+  @media(max-width:500px){.actions-bar{flex-direction:column;}.actions-bar .btn{width:100%;}}
 </style>
 </head>
 <body>
@@ -137,7 +109,7 @@
       </div>
     </div>
     <h2>Ingresa tu clave de API</h2>
-    <p>Para usar esta aplicacion necesitas una clave de Anthropic. Puedes obtenerla en <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. La clave se guarda unicamente en tu navegador y nunca se sube a ningun servidor.</p>
+    <p>Para usar esta aplicacion necesitas una clave de Anthropic. Puedes obtenerla en <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. La clave se guarda unicamente en tu navegador.</p>
     <div class="field-group">
       <label for="input-apikey">Clave de API de Anthropic</label>
       <input type="password" id="input-apikey" placeholder="sk-ant-api03-..." aria-describedby="apikey-hint" autocomplete="off" spellcheck="false">
@@ -155,7 +127,7 @@
       <div class="logo-mark" aria-hidden="true">CF</div>
       <div>
         <h1>ContaFactura</h1>
-        <p>Digitalizacion automatica con IA - v5</p>
+        <p>Digitalizacion automatica con IA - v6</p>
       </div>
     </div>
     <button class="btn btn-warn" id="btn-cambiar-key" aria-label="Cambiar clave de API">Cambiar clave</button>
@@ -220,284 +192,311 @@
 </div>
 
 <script>
-const state = { files: [], results: [], processing: false };
-let apiKey = '';
+const state={files:[],results:[],processing:false};
+let apiKey='';
 
-const pantallaApikey  = document.getElementById('pantalla-apikey');
-const pantallaApp     = document.getElementById('pantalla-app');
-const inputApikey     = document.getElementById('input-apikey');
-const btnGuardarKey   = document.getElementById('btn-guardar-key');
-const btnCambiarKey   = document.getElementById('btn-cambiar-key');
-const apikeyError     = document.getElementById('apikey-error');
-const fileInput       = document.getElementById('file-input');
-const dropZone        = document.getElementById('drop-zone');
-const queueSection    = document.getElementById('queue-section');
-const queueList       = document.getElementById('queue-list');
-const queueCounter    = document.getElementById('queue-counter');
-const btnProcess      = document.getElementById('btn-process');
-const btnExportCsv    = document.getElementById('btn-export-csv');
-const btnClear        = document.getElementById('btn-clear');
-const progressSection = document.getElementById('progress-section');
-const progressBar     = document.getElementById('progress-bar');
-const progressBarOuter= document.getElementById('progress-bar-outer');
-const progressText    = document.getElementById('progress-text');
-const resultsContainer= document.getElementById('results-container');
-const resultsCounter  = document.getElementById('results-counter');
-const emptyState      = document.getElementById('empty-state');
-const liveRegion      = document.getElementById('live-region');
-const errorMsg        = document.getElementById('error-msg');
-const debugPanel      = document.getElementById('debug-panel');
-const debugContent    = document.getElementById('debug-content');
+const pantallaApikey=document.getElementById('pantalla-apikey');
+const pantallaApp=document.getElementById('pantalla-app');
+const inputApikey=document.getElementById('input-apikey');
+const btnGuardarKey=document.getElementById('btn-guardar-key');
+const btnCambiarKey=document.getElementById('btn-cambiar-key');
+const apikeyError=document.getElementById('apikey-error');
+const fileInput=document.getElementById('file-input');
+const dropZone=document.getElementById('drop-zone');
+const queueSection=document.getElementById('queue-section');
+const queueList=document.getElementById('queue-list');
+const queueCounter=document.getElementById('queue-counter');
+const btnProcess=document.getElementById('btn-process');
+const btnExportCsv=document.getElementById('btn-export-csv');
+const btnClear=document.getElementById('btn-clear');
+const progressSection=document.getElementById('progress-section');
+const progressBar=document.getElementById('progress-bar');
+const progressBarOuter=document.getElementById('progress-bar-outer');
+const progressText=document.getElementById('progress-text');
+const resultsContainer=document.getElementById('results-container');
+const resultsCounter=document.getElementById('results-counter');
+const emptyState=document.getElementById('empty-state');
+const liveRegion=document.getElementById('live-region');
+const errorMsg=document.getElementById('error-msg');
+const debugPanel=document.getElementById('debug-panel');
+const debugContent=document.getElementById('debug-content');
 
-function anunciar(t) { liveRegion.textContent = ''; setTimeout(() => { liveRegion.textContent = t; }, 60); }
-function mostrarError(t) { errorMsg.textContent = t; errorMsg.classList.add('visible'); anunciar('Error: ' + t); }
-function ocultarError() { errorMsg.classList.remove('visible'); errorMsg.textContent = ''; }
-function mostrarDebug(t) { debugContent.textContent = t; debugPanel.classList.add('visible'); }
+function anunciar(t){liveRegion.textContent='';setTimeout(()=>{liveRegion.textContent=t;},60);}
+function mostrarError(t){errorMsg.textContent=t;errorMsg.classList.add('visible');anunciar('Error: '+t);}
+function ocultarError(){errorMsg.classList.remove('visible');errorMsg.textContent='';}
+function mostrarDebug(t){debugContent.textContent=t;debugPanel.classList.add('visible');}
+function validarKey(k){return k&&k.trim().startsWith('sk-ant-')&&k.trim().length>20;}
 
-function validarKey(k) { return k && k.trim().startsWith('sk-ant-') && k.trim().length > 20; }
-
-function mostrarPantallaKey() {
-  pantallaApikey.style.display = 'flex';
-  pantallaApp.style.display = 'none';
-  pantallaApp.setAttribute('aria-hidden', 'true');
-  inputApikey.value = '';
+function mostrarPantallaKey(){
+  pantallaApikey.style.display='flex';
+  pantallaApp.style.display='none';
+  pantallaApp.setAttribute('aria-hidden','true');
+  inputApikey.value='';
   apikeyError.classList.remove('visible');
-  setTimeout(() => inputApikey.focus(), 100);
+  setTimeout(()=>inputApikey.focus(),100);
 }
 
-function mostrarPantallaApp() {
-  pantallaApikey.style.display = 'none';
-  pantallaApp.style.display = 'block';
+function mostrarPantallaApp(){
+  pantallaApikey.style.display='none';
+  pantallaApp.style.display='block';
   pantallaApp.removeAttribute('aria-hidden');
   anunciar('Bienvenido a ContaFactura. Toca Seleccionar archivos para cargar tus facturas.');
 }
 
-btnGuardarKey.addEventListener('click', () => {
-  const k = inputApikey.value.trim();
-  if (!validarKey(k)) { apikeyError.classList.add('visible'); inputApikey.focus(); anunciar('La clave no es valida.'); return; }
+btnGuardarKey.addEventListener('click',()=>{
+  const k=inputApikey.value.trim();
+  if(!validarKey(k)){apikeyError.classList.add('visible');inputApikey.focus();anunciar('La clave no es valida.');return;}
   apikeyError.classList.remove('visible');
-  apiKey = k;
-  try { localStorage.setItem('cf_apikey', k); } catch (_) {}
+  apiKey=k;
+  try{localStorage.setItem('cf_apikey',k);}catch(_){}
   mostrarPantallaApp();
 });
 
-inputApikey.addEventListener('keydown', (e) => { if (e.key === 'Enter') btnGuardarKey.click(); });
+inputApikey.addEventListener('keydown',(e)=>{if(e.key==='Enter')btnGuardarKey.click();});
 
-btnCambiarKey.addEventListener('click', () => {
-  try { localStorage.removeItem('cf_apikey'); } catch (_) {}
-  apiKey = '';
+btnCambiarKey.addEventListener('click',()=>{
+  try{localStorage.removeItem('cf_apikey');}catch(_){}
+  apiKey='';
   mostrarPantallaKey();
 });
 
-(function init() {
-  let k = '';
-  try { k = localStorage.getItem('cf_apikey') || ''; } catch (_) {}
-  if (validarKey(k)) { apiKey = k; mostrarPantallaApp(); } else { mostrarPantallaKey(); }
+(function init(){
+  let k='';
+  try{k=localStorage.getItem('cf_apikey')||'';}catch(_){}
+  if(validarKey(k)){apiKey=k;mostrarPantallaApp();}else{mostrarPantallaKey();}
 })();
 
-fileInput.addEventListener('change', (e) => { agregarArchivos(Array.from(e.target.files)); fileInput.value = ''; });
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  const archivos = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/') || f.type === 'application/pdf');
-  if (archivos.length) agregarArchivos(archivos); else mostrarError('Solo se aceptan imagenes o PDF.');
+fileInput.addEventListener('change',(e)=>{agregarArchivos(Array.from(e.target.files));fileInput.value='';});
+dropZone.addEventListener('dragover',(e)=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',(e)=>{
+  e.preventDefault();dropZone.classList.remove('drag-over');
+  const a=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')||f.type==='application/pdf');
+  if(a.length)agregarArchivos(a);else mostrarError('Solo se aceptan imagenes o PDF.');
 });
 
-function agregarArchivos(nuevos) {
+function agregarArchivos(nuevos){
   ocultarError();
-  const yaExisten = new Set(state.files.map(f => f.name));
-  const entradas = nuevos.filter(f => !yaExisten.has(f.name)).map(f => ({ file: f, name: f.name, status: 'pending', data: null, errorMsg: '' }));
-  state.files.push(...entradas);
-  renderCola(); actualizarBotones();
-  if (entradas.length) anunciar(entradas.length + ' archivo' + (entradas.length > 1 ? 's' : '') + ' agregado' + (entradas.length > 1 ? 's' : '') + '. Total: ' + state.files.length + '.');
+  const ex=new Set(state.files.map(f=>f.name));
+  const en=nuevos.filter(f=>!ex.has(f.name)).map(f=>({file:f,name:f.name,status:'pending',data:null,errorMsg:''}));
+  state.files.push(...en);
+  renderCola();actualizarBotones();
+  if(en.length)anunciar(en.length+' archivo'+(en.length>1?'s':'')+' agregado'+(en.length>1?'s':'')+'. Total: '+state.files.length+'.');
 }
 
-function renderCola() {
-  queueList.innerHTML = '';
-  if (state.files.length === 0) { queueSection.style.display = 'none'; return; }
-  queueSection.style.display = 'block';
-  queueCounter.textContent = state.files.length + ' archivo' + (state.files.length !== 1 ? 's' : '');
-  state.files.forEach((item, idx) => {
-    const li = document.createElement('li'); li.className = 'queue-item';
-    const etiquetas = { pending: 'Pendiente', processing: 'Procesando', done: 'Completado', error: 'Error' };
-    li.setAttribute('aria-label', item.name + ', estado: ' + etiquetas[item.status]);
-    const row = document.createElement('div'); row.className = 'queue-item-row';
-    const fname = document.createElement('span'); fname.className = 'filename'; fname.title = item.name; fname.textContent = item.name; row.appendChild(fname);
-    const badge = document.createElement('span'); badge.className = 'status-badge status-' + item.status; badge.setAttribute('aria-hidden', 'true'); badge.textContent = etiquetas[item.status]; row.appendChild(badge);
-    if (item.status === 'pending' && !state.processing) {
-      const btnQ = document.createElement('button'); btnQ.className = 'btn btn-warn'; btnQ.textContent = 'Quitar'; btnQ.setAttribute('aria-label', 'Quitar ' + item.name);
-      btnQ.addEventListener('click', () => { state.files.splice(idx, 1); anunciar(item.name + ' eliminado.'); renderCola(); actualizarBotones(); }); row.appendChild(btnQ);
+function renderCola(){
+  queueList.innerHTML='';
+  if(state.files.length===0){queueSection.style.display='none';return;}
+  queueSection.style.display='block';
+  queueCounter.textContent=state.files.length+' archivo'+(state.files.length!==1?'s':'');
+  state.files.forEach((item,idx)=>{
+    const li=document.createElement('li');li.className='queue-item';
+    const et={pending:'Pendiente',processing:'Procesando',done:'Completado',error:'Error'};
+    li.setAttribute('aria-label',item.name+', estado: '+et[item.status]);
+    const row=document.createElement('div');row.className='queue-item-row';
+    const fn=document.createElement('span');fn.className='filename';fn.title=item.name;fn.textContent=item.name;row.appendChild(fn);
+    const bg=document.createElement('span');bg.className='status-badge status-'+item.status;bg.setAttribute('aria-hidden','true');bg.textContent=et[item.status];row.appendChild(bg);
+    if(item.status==='pending'&&!state.processing){
+      const bq=document.createElement('button');bq.className='btn btn-warn';bq.textContent='Quitar';bq.setAttribute('aria-label','Quitar '+item.name);
+      bq.addEventListener('click',()=>{state.files.splice(idx,1);anunciar(item.name+' eliminado.');renderCola();actualizarBotones();});row.appendChild(bq);
     }
-    if (item.status === 'error' && !state.processing) {
-      const btnR = document.createElement('button'); btnR.className = 'btn btn-retry'; btnR.textContent = 'Reintentar'; btnR.setAttribute('aria-label', 'Reintentar ' + item.name);
-      btnR.addEventListener('click', () => { item.status = 'pending'; item.errorMsg = ''; renderCola(); actualizarBotones(); anunciar(item.name + ' marcado como pendiente.'); }); row.appendChild(btnR);
+    if(item.status==='error'&&!state.processing){
+      const br=document.createElement('button');br.className='btn btn-retry';br.textContent='Reintentar';br.setAttribute('aria-label','Reintentar '+item.name);
+      br.addEventListener('click',()=>{item.status='pending';item.errorMsg='';renderCola();actualizarBotones();anunciar(item.name+' marcado como pendiente.');});row.appendChild(br);
     }
     li.appendChild(row);
-    if (item.status === 'error' && item.errorMsg) {
-      const ed = document.createElement('div'); ed.className = 'error-detail'; ed.setAttribute('role', 'alert'); ed.textContent = 'Error: ' + item.errorMsg; li.appendChild(ed);
+    if(item.status==='error'&&item.errorMsg){
+      const ed=document.createElement('div');ed.className='error-detail';ed.setAttribute('role','alert');ed.textContent='Error: '+item.errorMsg;li.appendChild(ed);
     }
     queueList.appendChild(li);
   });
 }
 
-function actualizarBotones() {
-  const hayP = state.files.some(f => f.status === 'pending'), hayR = state.results.length > 0, proc = state.processing;
-  setBtn(btnProcess, hayP && !proc); setBtn(btnExportCsv, hayR && !proc); setBtn(btnClear, (state.files.length > 0 || hayR) && !proc);
+function actualizarBotones(){
+  const hp=state.files.some(f=>f.status==='pending'),hr=state.results.length>0,pr=state.processing;
+  setBtn(btnProcess,hp&&!pr);setBtn(btnExportCsv,hr&&!pr);setBtn(btnClear,(state.files.length>0||hr)&&!pr);
 }
-function setBtn(btn, activo) { btn.disabled = !activo; btn.setAttribute('aria-disabled', String(!activo)); }
+function setBtn(btn,a){btn.disabled=!a;btn.setAttribute('aria-disabled',String(!a));}
 
-function leerBase64(file) {
-  return new Promise((resolve, reject) => {
-    try {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const result = reader.result;
-          if (!result || typeof result !== 'string') { reject(new Error('FileReader vacio')); return; }
-          const partes = result.split(',');
-          if (partes.length < 2) { reject(new Error('Formato inesperado')); return; }
-          resolve(partes[1]);
-        } catch (e) { reject(new Error('Error FileReader: ' + e.message)); }
+function leerBase64(file){
+  return new Promise((resolve,reject)=>{
+    try{
+      const r=new FileReader();
+      r.onload=()=>{
+        try{
+          const res=r.result;
+          if(!res||typeof res!=='string'){reject(new Error('FileReader vacio'));return;}
+          const p=res.split(',');
+          if(p.length<2){reject(new Error('Formato inesperado'));return;}
+          resolve(p[1]);
+        }catch(e){reject(new Error('Error FileReader: '+e.message));}
       };
-      reader.onerror = () => reject(new Error('FileReader error'));
-      reader.readAsDataURL(file);
-    } catch (e) { reject(new Error('No se pudo leer: ' + e.message)); }
+      r.onerror=()=>reject(new Error('FileReader error'));
+      r.readAsDataURL(file);
+    }catch(e){reject(new Error('No se pudo leer: '+e.message));}
   });
 }
 
-function extraerJSON(texto) {
-  if (!texto || typeof texto !== 'string') throw new Error('Respuesta vacia');
-  const o = texto.trim();
-  try { return JSON.parse(o); } catch (_) {}
-  const bj = o.match(/```json\s*([\s\S]*?)```/i); if (bj) { try { return JSON.parse(bj[1].trim()); } catch (_) {} }
-  const bg = o.match(/```\s*([\s\S]*?)```/); if (bg) { try { return JSON.parse(bg[1].trim()); } catch (_) {} }
-  const ini = o.indexOf('{'), fin = o.lastIndexOf('}');
-  if (ini !== -1 && fin > ini) { try { return JSON.parse(o.substring(ini, fin + 1)); } catch (_) {} }
-  const limpio = o.replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ').replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-  try { return JSON.parse(limpio); } catch (_) {}
-  throw new Error('No se pudo extraer JSON. Respuesta: ' + o.substring(0, 300));
+function extraerJSON(texto){
+  if(!texto||typeof texto!=='string')throw new Error('Respuesta vacia');
+  const o=texto.trim();
+  try{return JSON.parse(o);}catch(_){}
+  const bj=o.match(/```json\s*([\s\S]*?)```/i);if(bj){try{return JSON.parse(bj[1].trim());}catch(_){}}
+  const bg=o.match(/```\s*([\s\S]*?)```/);if(bg){try{return JSON.parse(bg[1].trim());}catch(_){}}
+  const ini=o.indexOf('{'),fin=o.lastIndexOf('}');
+  if(ini!==-1&&fin>ini){try{return JSON.parse(o.substring(ini,fin+1));}catch(_){}}
+  const lim=o.replace(/[\u0000-\u001F\u007F-\u009F]/g,' ').replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
+  try{return JSON.parse(lim);}catch(_){}
+  throw new Error('No se pudo extraer JSON. Respuesta: '+o.substring(0,300));
 }
 
-async function analizarFactura(item) {
-  const mediaType = (item.file.type && item.file.type !== '') ? item.file.type : 'image/jpeg';
-  const base64 = await leerBase64(item.file);
-  if (!base64 || base64.length < 10) throw new Error('No se pudo leer el archivo.');
-  const prompt = 'Eres un asistente contable experto. Analiza esta imagen de factura.\n\nINSTRUCCION CRITICA: Tu respuesta debe ser EXCLUSIVAMENTE el objeto JSON indicado abajo.\nNO escribas ninguna explicacion, saludo, ni texto antes o despues del JSON.\nNO uses bloques de codigo ni backticks.\nSOLO el JSON puro.\n\nFormato exacto requerido:\n{"tipo":"venta o compra o desconocido","numero_factura":"valor o null","fecha":"YYYY-MM-DD o texto encontrado o null","proveedor_o_cliente":"nombre o null","ruc_rfc":"identificacion fiscal o null","subtotal":numero_o_null,"iva":numero_o_null,"total":numero_o_null,"moneda":"PYG o MXN o USD o la que corresponda","concepto_principal":"descripcion breve o null","notas":"datos adicionales o null"}\n\nReglas:\n- Para campos numericos usa solo el numero sin puntos ni comas. Si no se puede determinar usa null.\n- tipo venta si vende al cliente, compra si compra a proveedor.\n- Guaranies paraguayos: usa PYG.';
-  let contenido;
-  if (mediaType === 'application/pdf') {
-    contenido = [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }, { type: 'text', text: prompt }];
-  } else {
-    const mt = mediaType.startsWith('image/') ? mediaType : 'image/jpeg';
-    contenido = [{ type: 'image', source: { type: 'base64', media_type: mt, data: base64 } }, { type: 'text', text: prompt }];
-  }
+async function analizarFactura(item){
+  const mediaType=(item.file.type&&item.file.type!=='')?item.file.type:'image/jpeg';
+  const base64=await leerBase64(item.file);
+  if(!base64||base64.length<10)throw new Error('No se pudo leer el archivo.');
+  const mt=mediaType.startsWith('image/')?mediaType:'image/jpeg';
+
+  const prompt='Eres un asistente contable experto. Analiza esta imagen de factura.\n\nINSTRUCCION CRITICA: Tu respuesta debe ser EXCLUSIVAMENTE el objeto JSON indicado abajo.\nNO escribas ninguna explicacion ni texto adicional. SOLO el JSON puro.\n\nFormato exacto:\n{"tipo":"venta o compra o desconocido","numero_factura":"valor o null","fecha":"YYYY-MM-DD o null","proveedor_o_cliente":"nombre o null","ruc_rfc":"identificacion fiscal o null","subtotal":numero_o_null,"iva":numero_o_null,"total":numero_o_null,"moneda":"PYG o MXN o USD","concepto_principal":"descripcion breve o null","notas":"datos adicionales o null"}\n\nReglas:\n- Numeros sin puntos ni comas de miles. Si no se puede determinar usa null.\n- tipo venta si la despensa vende, compra si la despensa compra.\n- Guaranies paraguayos usa PYG.';
+
+  const cuerpo=JSON.stringify({
+    model:'claude-sonnet-4-20250514',
+    max_tokens:1000,
+    messages:[{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:mt,data:base64}},
+      {type:'text',text:prompt}
+    ]}]
+  });
+
+  // Intentar con fetch directo primero, luego fallback a proxy
   let response;
-  try {
-    response = await fetch('https://corsproxy.io/?url=https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: contenido }] })
+  let usandoProxy=false;
+
+  try{
+    response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      body:cuerpo
     });
-  } catch (e) { throw new Error('Error de red: ' + e.message); }
-  if (!response.ok) {
-    let d = '';
-    try { const ej = await response.json(); d = ej?.error?.message || JSON.stringify(ej); } catch (_) { d = 'sin detalle'; }
-    if (response.status === 401) throw new Error('Clave de API invalida o expirada. Toca Cambiar clave para ingresar una nueva.');
-    throw new Error('API HTTP ' + response.status + ': ' + d);
+  }catch(e){
+    // CORS bloqueado, usar proxy
+    usandoProxy=true;
   }
+
+  if(usandoProxy||!response||!response.ok&&response.status===0){
+    // Proxy que reenvía headers personalizados
+    const proxyUrl='https://corsproxy.io/?url='+encodeURIComponent('https://api.anthropic.com/v1/messages');
+    try{
+      response=await fetch(proxyUrl,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+        body:cuerpo
+      });
+    }catch(e2){
+      throw new Error('Error de red con proxy: '+e2.message);
+    }
+  }
+
+  if(!response.ok){
+    let d='';
+    try{const ej=await response.json();d=ej?.error?.message||JSON.stringify(ej);}catch(_){d='sin detalle';}
+    if(response.status===401)throw new Error('Clave de API invalida o expirada. Toca Cambiar clave.');
+    throw new Error('API HTTP '+response.status+': '+d);
+  }
+
   let data;
-  try { data = await response.json(); } catch (e) { throw new Error('Respuesta invalida: ' + e.message); }
-  const txt = (data?.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('').trim();
-  if (!txt) throw new Error('API devolvio respuesta sin texto.');
-  mostrarDebug('Respuesta bruta:\n' + txt);
+  try{data=await response.json();}catch(e){throw new Error('Respuesta invalida: '+e.message);}
+
+  const txt=(data?.content||[]).filter(b=>b.type==='text').map(b=>b.text||'').join('').trim();
+  if(!txt)throw new Error('API devolvio respuesta sin texto.');
+  mostrarDebug('Respuesta bruta:\n'+txt);
   return extraerJSON(txt);
 }
 
-btnProcess.addEventListener('click', async () => {
-  if (state.processing) return;
-  ocultarError(); debugPanel.classList.remove('visible');
-  const pendientes = state.files.filter(f => f.status === 'pending');
-  if (!pendientes.length) return;
-  state.processing = true; actualizarBotones(); progressSection.classList.add('visible');
-  let procesados = 0; const total = pendientes.length;
-  anunciar('Procesando ' + total + ' factura' + (total > 1 ? 's' : '') + '. Por favor espere.');
-  for (const item of pendientes) {
-    item.status = 'processing'; item.errorMsg = ''; renderCola();
-    try {
-      const datos = await analizarFactura(item);
-      item.status = 'done'; item.data = datos;
-      state.results.push(Object.assign({ archivo: item.name }, datos));
-      anunciar(item.name + ' procesada.'); debugPanel.classList.remove('visible');
-    } catch (err) {
-      item.status = 'error'; item.errorMsg = err.message;
-      mostrarDebug('Error en ' + item.name + ':\n' + err.message);
-      anunciar('Error en ' + item.name + ': ' + err.message);
+btnProcess.addEventListener('click',async()=>{
+  if(state.processing)return;
+  ocultarError();debugPanel.classList.remove('visible');
+  const pendientes=state.files.filter(f=>f.status==='pending');
+  if(!pendientes.length)return;
+  state.processing=true;actualizarBotones();progressSection.classList.add('visible');
+  let procesados=0;const total=pendientes.length;
+  anunciar('Procesando '+total+' factura'+(total>1?'s':'')+'. Por favor espere.');
+  for(const item of pendientes){
+    item.status='processing';item.errorMsg='';renderCola();
+    try{
+      const datos=await analizarFactura(item);
+      item.status='done';item.data=datos;
+      state.results.push(Object.assign({archivo:item.name},datos));
+      anunciar(item.name+' procesada.');debugPanel.classList.remove('visible');
+    }catch(err){
+      item.status='error';item.errorMsg=err.message;
+      mostrarDebug('Error en '+item.name+':\n'+err.message);
+      anunciar('Error en '+item.name+': '+err.message);
     }
     procesados++;
-    const pct = Math.round((procesados / total) * 100);
-    progressBar.style.width = pct + '%'; progressBarOuter.setAttribute('aria-valuenow', pct);
-    progressText.textContent = procesados + ' / ' + total;
-    renderCola(); renderResultados(); actualizarBotones();
+    const pct=Math.round((procesados/total)*100);
+    progressBar.style.width=pct+'%';progressBarOuter.setAttribute('aria-valuenow',pct);
+    progressText.textContent=procesados+' / '+total;
+    renderCola();renderResultados();actualizarBotones();
   }
-  state.processing = false; actualizarBotones();
-  const ex = state.files.filter(f => f.status === 'done').length, er = state.files.filter(f => f.status === 'error').length;
-  let msg = 'Procesamiento completado. ' + ex + ' correcta' + (ex !== 1 ? 's' : '') + '.';
-  if (er > 0) msg += ' ' + er + ' con error.';
-  if (ex > 0) msg += ' Puede exportar el CSV.';
+  state.processing=false;actualizarBotones();
+  const ex=state.files.filter(f=>f.status==='done').length,er=state.files.filter(f=>f.status==='error').length;
+  let msg='Procesamiento completado. '+ex+' correcta'+(ex!==1?'s':'')+'.';
+  if(er>0)msg+=' '+er+' con error.';
+  if(ex>0)msg+=' Puede exportar el CSV.';
   anunciar(msg);
 });
 
-function renderResultados() {
-  if (state.results.length === 0) { resultsContainer.innerHTML = ''; resultsContainer.appendChild(emptyState); resultsCounter.textContent = ''; return; }
-  resultsCounter.textContent = state.results.length + ' registro' + (state.results.length !== 1 ? 's' : '');
-  const cols = [
-    { key: 'archivo', label: 'Archivo' }, { key: 'tipo', label: 'Tipo' }, { key: 'numero_factura', label: 'N. Factura' },
-    { key: 'fecha', label: 'Fecha' }, { key: 'proveedor_o_cliente', label: 'Prov/Cliente' }, { key: 'ruc_rfc', label: 'RUC/RFC' },
-    { key: 'concepto_principal', label: 'Concepto' }, { key: 'subtotal', label: 'Subtotal' }, { key: 'iva', label: 'IVA' },
-    { key: 'total', label: 'Total' }, { key: 'moneda', label: 'Moneda' }, { key: 'notas', label: 'Notas' },
+function renderResultados(){
+  if(state.results.length===0){resultsContainer.innerHTML='';resultsContainer.appendChild(emptyState);resultsCounter.textContent='';return;}
+  resultsCounter.textContent=state.results.length+' registro'+(state.results.length!==1?'s':'');
+  const cols=[
+    {key:'archivo',label:'Archivo'},{key:'tipo',label:'Tipo'},{key:'numero_factura',label:'N. Factura'},
+    {key:'fecha',label:'Fecha'},{key:'proveedor_o_cliente',label:'Prov/Cliente'},{key:'ruc_rfc',label:'RUC/RFC'},
+    {key:'concepto_principal',label:'Concepto'},{key:'subtotal',label:'Subtotal'},{key:'iva',label:'IVA'},
+    {key:'total',label:'Total'},{key:'moneda',label:'Moneda'},{key:'notas',label:'Notas'},
   ];
-  const tabla = document.createElement('table'); tabla.setAttribute('aria-label', 'Datos extraidos de facturas');
-  const thead = document.createElement('thead'); const trH = document.createElement('tr');
-  cols.forEach((col, i) => { const th = document.createElement('th'); th.setAttribute('scope', 'col'); th.setAttribute('aria-colindex', i + 1); th.textContent = col.label; trH.appendChild(th); });
-  thead.appendChild(trH); tabla.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  state.results.forEach((row, ri) => {
-    const tr = document.createElement('tr'); tr.setAttribute('aria-rowindex', ri + 2);
-    cols.forEach((col, ci) => {
-      const td = document.createElement('td'); td.setAttribute('aria-colindex', ci + 1);
-      const val = row[col.key];
-      if (col.key === 'tipo' && val) {
-        const sp = document.createElement('span'); sp.className = 'td-tipo tipo-' + (val === 'venta' ? 'venta' : val === 'compra' ? 'compra' : 'desconocido');
-        sp.textContent = val.charAt(0).toUpperCase() + val.slice(1); td.appendChild(sp);
-      } else if (['subtotal','iva','total'].includes(col.key) && val != null && val !== '') {
-        td.className = col.key === 'total' ? 'td-total' : '';
-        const num = parseFloat(val); td.textContent = isNaN(num) ? val : num.toLocaleString('es-PY');
-      } else { td.textContent = (val != null && val !== '') ? val : '-'; }
+  const tabla=document.createElement('table');tabla.setAttribute('aria-label','Datos extraidos de facturas');
+  const thead=document.createElement('thead');const trH=document.createElement('tr');
+  cols.forEach((col,i)=>{const th=document.createElement('th');th.setAttribute('scope','col');th.setAttribute('aria-colindex',i+1);th.textContent=col.label;trH.appendChild(th);});
+  thead.appendChild(trH);tabla.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  state.results.forEach((row,ri)=>{
+    const tr=document.createElement('tr');tr.setAttribute('aria-rowindex',ri+2);
+    cols.forEach((col,ci)=>{
+      const td=document.createElement('td');td.setAttribute('aria-colindex',ci+1);
+      const val=row[col.key];
+      if(col.key==='tipo'&&val){
+        const sp=document.createElement('span');sp.className='td-tipo tipo-'+(val==='venta'?'venta':val==='compra'?'compra':'desconocido');
+        sp.textContent=val.charAt(0).toUpperCase()+val.slice(1);td.appendChild(sp);
+      }else if(['subtotal','iva','total'].includes(col.key)&&val!=null&&val!==''){
+        td.className=col.key==='total'?'td-total':'';
+        const num=parseFloat(val);td.textContent=isNaN(num)?val:num.toLocaleString('es-PY');
+      }else{td.textContent=(val!=null&&val!=='')?val:'-';}
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
-  tabla.appendChild(tbody); resultsContainer.innerHTML = '';
-  const wrap = document.createElement('div'); wrap.className = 'table-wrapper'; wrap.appendChild(tabla); resultsContainer.appendChild(wrap);
+  tabla.appendChild(tbody);resultsContainer.innerHTML='';
+  const wrap=document.createElement('div');wrap.className='table-wrapper';wrap.appendChild(tabla);resultsContainer.appendChild(wrap);
 }
 
-btnExportCsv.addEventListener('click', () => {
-  if (!state.results.length) return;
-  const cabeceras = ['Archivo','Tipo','Numero Factura','Fecha','Proveedor Cliente','RUC RFC','Concepto','Subtotal','IVA','Total','Moneda','Notas'];
-  const filas = state.results.map(r => [r.archivo||'',r.tipo||'',r.numero_factura||'',r.fecha||'',r.proveedor_o_cliente||'',r.ruc_rfc||'',r.concepto_principal||'',r.subtotal!=null?r.subtotal:'',r.iva!=null?r.iva:'',r.total!=null?r.total:'',r.moneda||'',r.notas||'']);
-  const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
-  const csv = [cabeceras.map(esc).join(','), ...filas.map(f => f.map(esc).join(','))].join('\r\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
-  a.download = 'facturas_' + new Date().toISOString().slice(0,10) + '.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-  anunciar('CSV exportado. ' + state.results.length + ' registros.');
+btnExportCsv.addEventListener('click',()=>{
+  if(!state.results.length)return;
+  const cab=['Archivo','Tipo','Numero Factura','Fecha','Proveedor Cliente','RUC RFC','Concepto','Subtotal','IVA','Total','Moneda','Notas'];
+  const fil=state.results.map(r=>[r.archivo||'',r.tipo||'',r.numero_factura||'',r.fecha||'',r.proveedor_o_cliente||'',r.ruc_rfc||'',r.concepto_principal||'',r.subtotal!=null?r.subtotal:'',r.iva!=null?r.iva:'',r.total!=null?r.total:'',r.moneda||'',r.notas||'']);
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv=[cab.map(esc).join(','),...fil.map(f=>f.map(esc).join(','))].join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+  a.download='facturas_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  anunciar('CSV exportado. '+state.results.length+' registros.');
 });
 
-btnClear.addEventListener('click', () => {
-  state.files = []; state.results = []; state.processing = false;
-  progressSection.classList.remove('visible'); progressBar.style.width = '0%'; progressText.textContent = '0 / 0';
-  debugPanel.classList.remove('visible'); ocultarError(); renderCola(); renderResultados(); actualizarBotones();
+btnClear.addEventListener('click',()=>{
+  state.files=[];state.results=[];state.processing=false;
+  progressSection.classList.remove('visible');progressBar.style.width='0%';progressText.textContent='0 / 0';
+  debugPanel.classList.remove('visible');ocultarError();renderCola();renderResultados();actualizarBotones();
   anunciar('Todo limpiado.');
 });
 
